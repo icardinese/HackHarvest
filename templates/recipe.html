@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food + Pumpkinz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Food + Pumpkins</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">HackHarvest</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">Foodbanks</a></li>
+                <li><a href="#">Log In / Sign Up</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class = "recipes">
+            <div class="message-text">
+                <h2>Here are some recipes you can make with your leftovers!</h2>
+            </div>
+            <div class="recipe-grid">
+                    <img src="{{ recipe['image'] }}" alt="{{ recipe['title'] }}" class="recipe-image">
+                    <div class="recipe-info">
+                        <h3>{{ recipe['title'] }}</h3>
+                        <p>Calories: {{ recipe['nutrientinfo']['Calories']['amount'] }} kcal</p>
+                        <p>Protein: {{ recipe['nutrientinfo']['Protein']['amount'] }}g</p>
+                        <p>Carbs: {{ recipe['nutrientinfo']['Carbohydrates']['amount'] }}g</p>
+                        <p>Fat: {{ recipe['nutrientinfo']['Fat']['amount'] }}g</p>
+                        <p>Ingredients: </p>
+                        <ul>
+                            {% for ingredient in recipe['nutrition']['ingredients'] %}
+                            <li>{{ ingredient['name'] }}</li>
+                            {% endfor %}
+                        </ul>
+                        <p>Instructions: </p>
+                            {% for instruction in recipe['analyzedInstructions']['steps'] %}
+                            <p3>
+                                Step {{ instruction['number'] }}: 
+                            </p3>
+                            <li>{{ instruction }}</li>
+                            {% endfor %}
+                    </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Food + Pumpkins. All rights reserved.</p>
+    </footer>
+</body>
+</html>

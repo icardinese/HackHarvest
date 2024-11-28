@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food + Pumpkinz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Food + Pumpkins</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">HackHarvest</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">Foodbanks</a></li>
+                <li><a href="#">Log In / Sign Up</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="intro">
+            <div class="help-text">
+                <h2>Help reduce food waste</h2>
+                <p>Your leftovers can make a difference. Find recipes or locate nearby foodbanks.</p>
+            </div>
+            <form class="recipe-form" method ='POST' action="/">
+                <h3>Got any leftovers?</h3>
+                <p>Add your ingredients to get an array of recipe suggestions!</p>
+                <label for="origin">Cultural Origin:</label>
+                <select id="origin" name="origin">
+                    <option value="american">American</option>
+                    <option value="mexican">Mexican</option>
+                    <option value="asian">Asian</option>
+                    <option value="italian">Italian</option>
+                    <option value="french">French</option>
+                    <option value="indian">Indian</option>
+                    <option value="mediterranean">Mediterranean</option>
+                    <option value="middle eastern">Middle Eastern</option>
+                    <option value="african">African</option>
+                    <option value="korean">Korean</option>
+                    <option value="japanese">Japanese</option>
+                    <option value="thai">Thai</option>
+                    <option value="vietnamese">Vietnamese</option>
+                    <option value="chinese">Chinese</option>
+                    <option value="caribbean">Caribbean</option>
+                    <option value="latin american">Latin American</option>
+                    <option value="british">British</option>
+                    <option value="irish">Irish</option>
+                    <option value="cajun">Cajun</option>
+                    <option value="southern">Southern</option>
+                    <option value="greek">Greek</option>
+                    <option value="german">German</option>
+                    <option value="nordic">Nordic</option>
+                    <option value="eastern european">Eastern European</option>
+                    <option value="jewish">Jewish</option>
+                    <option value="spanish">Spanish</option>
+                    <option value="european">European</option>
+                </select>
+                <label for="calories">Calorie Limit:</label>
+                <input type="number" id="calories" name="calories" placeholder="e.g. 500">
+                <label for="sortType">Sort by:</label>
+                <select id="sortType" name="sortType">
+                    <option value="popularity">Popularity</option>
+                    <option value="healthiness">Healthiness</option>
+                    <option value="price">Price</option>
+                    <option value="time">Time</option>
+                    <option value="random">Random</option>
+                    <option value="max-used-ingredients">Max Used Ingredients</option>
+                    <option value="min-missing-ingredients">Min Missing Ingredients</option>
+                    <option value="alcohol">Alcohol</option>
+                    <option value="caffeine">Caffeine</option>
+                    <option value="copper">Copper</option>
+                    <option value="energy">Energy</option>
+                    <option value="calories">Calories</option>
+                    <option value="calcium">Calcium</option>
+                    <option value="carbohydrates">Carbohydrates</option>
+                    <option value="carbs">Carbs</option>
+                    <option value="choline">Choline</option>
+                    <option value="cholesterol">Cholesterol</option>
+                    <option value="total-fat">Total Fat</option>
+                    <option value="fluoride">Fluoride</option>
+                    <option value="trans-fat">Trans Fat</option>
+                    <option value="saturated-fat">Saturated Fat</option>
+                    <option value="mono-unsaturated-fat">Mono Unsaturated Fat</option>
+                    <option value="poly-unsaturated-fat">Poly Unsaturated Fat</option>
+                    <option value="fiber">Fiber</option>
+                    <option value="folate">Folate</option>
+                    <option value="folic-acid">Folic Acid</option>
+                    <option value="iodine">Iodine</option>
+                    <option value="iron">Iron</option>
+                    <option value="magnesium">Magnesium</option>
+                    <option value="manganese">Manganese</option>
+                    <option value="vitamin-b3">Vitamin B3</option>
+                    <option value="niacin">Niacin</option>
+                    <option value="vitamin-b5">Vitamin B5</option>
+                    <option value="pantothenic-acid">Pantothenic Acid</option>
+                    <option value="phosphorus">Phosphorus</option>
+                    <option value="potassium">Potassium</option>
+                    <option value="protein">Protein</option>
+                    <option value="vitamin-b2">Vitamin B2</option>
+                    <option value="riboflavin">Riboflavin</option>
+                    <option value="selenium">Selenium</option>
+                    <option value="sodium">Sodium</option>
+                    <option value="vitamin-b1">Vitamin B1</option>
+                    <option value="thiamin">Thiamin</option>
+                    <option value="vitamin-a">Vitamin A</option>
+                    <option value="vitamin-b6">Vitamin B6</option>
+                    <option value="vitamin-b12">Vitamin B12</option>
+                    <option value="vitamin-c">Vitamin C</option>
+                    <option value="vitamin-d">Vitamin D</option>
+                    <option value="vitamin-e">Vitamin E</option>
+                    <option value="vitamin-k">Vitamin K</option>
+                    <option value="sugar">Sugar</option>
+                    <option value="zinc">Zinc</option>
+                </select>
+                <label for="ingredient">Add Ingredients:</label>
+                <input type="text" id="ingredient" placeholder="e.g., tomato">
+                <button type="button" id="addIngredientBtn">+</button>
+                <button type="button", id="clearRecipes">Clear Recipes</button>
+                <ul id="ingredientList"></ul>
+                <input type="hidden" name="ingredients" id="ingredientsInput">
+                {% if error %}
+                    <p>{{ error }}</p>
+                {% endif %}
+                <button type="submit">Submit</button>
+
+                <script>
+                    const addIngredientBtn = document.getElementById('addIngredientBtn');
+                    const ingredientInput = document.getElementById('ingredient');
+                    const ingredientList = document.getElementById('ingredientList');
+                    const ingredientsInput = document.getElementById('ingredientsInput');
+                    const clearRecipes = document.getElementById('clearRecipes');
+                
+                    let ingredients = []; // To store the ingredients
+                
+                    addIngredientBtn.addEventListener('click', () => {
+                        const ingredient = ingredientInput.value.trim();
+                        if (ingredient && !ingredients.includes(ingredient)) {
+                            ingredients.push(ingredient);
+                            const listItem = document.createElement('li');
+                            listItem.textContent = ingredient;
+                            ingredientList.appendChild(listItem);
+                            ingredientInput.value = ''; // Clear input
+                            ingredientsInput.value = ingredients.join(','); // Update hidden input
+                        }
+                    });
+                    clearRecipes.addEventListener('click', () => {
+                        ingredients = [];
+                        ingredientList.innerHTML = '';
+                        ingredientsInput.value = '';
+                    });
+                </script>
+            </form>
+        </section>
+
+        <section class="narrative">
+            <div class="stats">
+                <p><strong>X</strong> amount of people die of hunger daily.</p>
+                <p><strong>X</strong> amount of food is wasted.</p>
+            </div>
+            <div class="call-to-action">
+                <p>Don’t have use for food? Please try our locating foodbank feature!</p>
+                <button onclick="window.location.href='#'">Find Foodbanks</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Food + Pumpkins. All rights reserved.</p>
+    </footer>
+</body>
+</html>

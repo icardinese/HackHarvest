@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food + Pumpkinz</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Food + Pumpkins</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#">HackHarvest</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="#">Foodbanks</a></li>
+                <li><a href="#">Log In / Sign Up</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class = "recipes">
+            <div class="message-text">
+                <h2>Here are some recipes you can make with your leftovers!</h2>
+            </div>
+            <div class="recipe-grid">
+                {% for recipe in recipes %}
+                <a href="{{ url_for('recipe_details', recipe_id=recipe['id']) }}" class="recipe-container">
+                    <img src="{{ recipe['image'] }}" alt="{{ recipe['title'] }}" class="recipe-image">
+                    <div class="recipe-info">
+                        <h2>Name: {{ recipe["title"] }}</h2>
+                        <p>Calories: {{ recipe['nutrientinfo']['Calories']['amount'] }} kcal</p>
+                        <p>Protein: {{ recipe['nutrientinfo']['Protein']['amount'] }}g</p>
+                        <p>Carbs: {{ recipe['nutrientinfo']['Carbohydrates']['amount'] }}g</p>
+                        <p>Fat: {{ recipe['nutrientinfo']['Fat']['amount'] }}g</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2024 Food + Pumpkins. All rights reserved.</p>
+    </footer>
+</body>
+</html>
