@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask import render_template
 import requests
 
@@ -47,6 +47,7 @@ def home():
             recipes = response.json().get("results", [])
 
             for recipe in recipes:
+                # Create a new dictionary section in the original data for a parsed and more accesible nutrient information list
                 info = {}
                 # Access the 'nutrients' key inside 'nutrition'
                 nutrients = recipe.get("nutrition", {}).get("nutrients", [])
@@ -78,6 +79,35 @@ def recipe_details(recipe_id):
     if not recipe:
         return "Recipe not found", 404
     return render_template('recipe.html', recipe=recipe)
+
+@app.route('/foodbankfinder')
+def foodbankfinder():
+    print("Map Loaded")
+    return render_template('foodbankfinder.html', map=map)
+
+@app.route('/foodbank_requests', methods=['GET', 'POST'])
+def foodbank_requests():
+    if request.method == 'POST':
+        # Collect data from the form
+        foodbank_name = request.form.get('foodbank_name')
+        address = request.form.get('address')
+        requested_recipes = request.form.get('requested_recipes')  # Comma-separated recipes
+
+        # Save the request data (you can replace this with database logic)
+        # For now, save it in a global list or JSON file
+        with open('foodbank_requests.json', 'a') as f:
+            f.write(f"{foodbank_name},{address},{requested_recipes}\n")
+
+        return render_template('request_success.html', foodbank_name=foodbank_name)
+
+    return render_template('foodbank_form.html')
+
+@app.route('/get_requests')
+def get_requests():
+    with open('foodbank_requests.json', 'r') as f:
+        requests = f.readlines()
+    return jsonify([line.strip().split(',') for line in requests])
+
 
 if __name__ == "__main__":
     app.run(debug=True)

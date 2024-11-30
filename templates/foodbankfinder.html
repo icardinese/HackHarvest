@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Food Banks Map</title>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Food + Pumpkins</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">HackHarvest</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="{{ url_for('foodbank_requests') }}">Foodbanks</a></li>
+                <li><a href="#">Log In / Sign Up</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div id="map" style="height: 80vh;"></div>
+    <div class="controls">
+        <input id="pac-input" type="text" placeholder="Enter a location" />
+        <button id="search-btn">Search</button>
+    </div>
+    <script>
+        let map; // Declare map globally
+        let service; // Declare service globally
+        let markers = []; // Track all markers
+    
+        function initMap() {
+            // Initialize the map
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 37.7749, lng: -122.4194 }, // Default location (San Francisco)
+                zoom: 12,
+                mapId: "ee1ff17c855281dd",
+            });
+    
+            service = new google.maps.places.PlacesService(map);
+    
+            // Perform an initial search for food banks
+            searchNearby(map.getCenter());
+        }
+    
+        function searchNearby(location) {
+            clearMarkers(); // Clear existing markers
+            const request = {
+                location: location,
+                radius: "10000", // 10 km radius
+                keyword: "food bank",
+            };
+
+            service.nearbySearch(request, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    // Fetch food bank requests from Flask
+                    fetch('/get_requests')
+                        .then(response => response.json())
+                        .then(foodbankRequests => {
+                            results.forEach((place) => {
+                                // Check if the food bank has requested recipes
+                                const matchingRequest = foodbankRequests.find(req => req[1] === place.vicinity);
+                                const hasRequests = !!matchingRequest;
+
+                                createMarker(place, hasRequests, matchingRequest ? matchingRequest[2] : null);
+                            });
+                        })
+                        .catch(error => console.error("Error fetching requests:", error));
+                } else {
+                    console.error("Error during PlacesService request:", status);
+                }
+            });
+        }
+    
+        function clearMarkers() {
+            markers.forEach((marker) => marker.map = null); // Remove markers from map
+            markers = []; // Reset marker array
+        }
+    
+        function createMarker(place, hasRequests, recipes) {
+            const isOpen = place.opening_hours && place.opening_hours.isOpen();
+            const markerShape = hasRequests ? "square" : "circle"; // Square for food banks with requests
+
+            const markerDiv = document.createElement('div');
+            markerDiv.style.backgroundColor = isOpen ? "red" : "gray";
+            markerDiv.style.width = markerShape === "square" ? "16px" : "12px";
+            markerDiv.style.height = markerShape === "square" ? "16px" : "12px";
+            markerDiv.style.border = "1px solid black";
+            markerDiv.style.borderRadius = markerShape === "square" ? "0" : "50%";
+
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+                position: place.geometry.location,
+                map: map,
+                title: place.name,
+                content: markerDiv,
+            });
+
+            markers.push(marker); // Add marker to global array
+
+            const infoWindowContent = `
+                <strong>${place.name}</strong><br>
+                ${place.vicinity || "Address not available"}<br>
+                Status: ${isOpen ? "Open" : "Closed"}<br>
+                ${hasRequests ? `<strong>Requested Recipes:</strong> ${recipes}` : ""}
+            `;
+
+            const infoWindow = new google.maps.InfoWindow({
+                content: infoWindowContent,
+            });
+
+            markerDiv.addEventListener("click", () => {
+                infoWindow.open({
+                    anchor: marker,
+                    map: map,
+                });
+            });
+        }
+
+    
+        // Handle search button click
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("search-btn").addEventListener("click", () => {
+                const input = document.getElementById("pac-input").value.trim();
+                if (input) {
+                    const geocoder = new google.maps.Geocoder();
+                    geocoder.geocode({ address: input }, (results, status) => {
+                        if (status === "OK") {
+                            const newLocation = results[0].geometry.location;
+                            map.setCenter(newLocation); // Re-center map
+                            searchNearby(newLocation); // Search nearby food banks
+                        } else {
+                            alert("Geocode was not successful for the following reason: " + status);
+                        }
+                    });
+                } else {
+                    alert("Please enter a location!");
+                }
+            });
+        });
+    
+        // Ensure initMap is called when the page loads
+        window.onload = initMap;
+    </script>
+    
+    <script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgYrzWtLZnfB4fpn8Z9l9zPdb66N2P2J8&libraries=places,marker&callback=initMap"
+    async
+    defer></script>
+</body>
+</html>

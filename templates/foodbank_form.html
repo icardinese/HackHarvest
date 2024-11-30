@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request Recipes</title>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>Food + Pumpkins</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('home') }}">HackHarvest</a></li>
+                <li><a href="#">Contact Us</a></li>
+                <li><a href="{{ url_for('foodbank_requests') }}">Foodbanks</a></li>
+                <li><a href="#">Log In / Sign Up</a></li>
+            </ul>
+        </nav>
+    </header>
+    <h1>Request Recipes for Your Food Bank</h1>
+    <form method="POST" action="/foodbank_requests">
+        <label for="foodbank_name">Food Bank Name:</label><br>
+        <input type="text" id="foodbank_name" name="foodbank_name" required><br><br>
+
+        <label for="address">Address:</label><br>
+        <input type="text" id="address" name="address" required><br><br>
+
+        <label for="requested_recipes">Requested Recipes (comma-separated):</label><br>
+        <textarea id="requested_recipes" name="requested_recipes" rows="4" cols="50" required></textarea><br><br>
+
+        <button type="submit">Submit Request</button>
+    </form>
+</body>
+</html>

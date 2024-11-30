@@ -1,0 +1,158 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(to bottom, #fdfcfb, #f1ebe1);
+    margin: 0;
+    padding: 0;
+}
+
+/* Header */
+header {
+    background-color: #ff9800;
+    color: #fff;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header .logo h1 {
+    font-size: 24px;
+}
+
+header nav ul {
+    list-style: none;
+    display: flex;
+}
+
+header nav ul li {
+    margin: 0 10px;
+}
+
+header nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+}
+
+
+/* Recipe Content */
+.message-text {
+    background: #f9f9f9;
+    color: #333;
+    padding: 10px;
+    margin: 20px;
+    border-left: 4px solid #ff6700;
+}
+
+.recipe-details {
+    display: flex;
+    margin: 20px;
+    gap: 20px;
+}
+
+.recipe-image {
+    flex: 1;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    max-width: 100%;
+    margin: 20px;
+}
+
+.recipe-info {
+    flex: 2;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.recipe-info h3 {
+    margin-top: 0;
+    color: #ff6700;
+}
+
+.recipe-info ul {
+    padding-left: 20px;
+}
+
+.ingredients-section {
+    margin: 20px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ingredients-section .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.view-toggle button {
+    background: #ff6700;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.view-toggle button:hover {
+    background: #e65c00;
+}
+
+.ingredients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+}
+
+.ingredient-item {
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    padding: 10px;
+    background: #fdfcfb;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ingredient-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 50%;
+    margin-bottom: 10px;
+}
+
+.ingredient-quantity {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.ingredient-name {
+    font-size: 14px;
+    color: #555;
+}
+
+button {
+    background: orange;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: darkorange;
+}
+
+footer {
+    text-align: center;
+    padding: 10px;
+    background: #f1ebe1;
+    color: #333;
+}

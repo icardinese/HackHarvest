@@ -13,9 +13,9 @@
         </div>
         <nav>
             <ul>
-                <li><a href="#">HackHarvest</a></li>
+                <li><a href="{{ url_for('home') }}">HackHarvest</a></li>
                 <li><a href="#">Contact Us</a></li>
-                <li><a href="#">Foodbanks</a></li>
+                <li><a href="{{ url_for('foodbank_requests') }}">Foodbanks</a></li>
                 <li><a href="#">Log In / Sign Up</a></li>
             </ul>
         </nav>
@@ -164,7 +164,7 @@
             </div>
             <div class="call-to-action">
                 <p>Don’t have use for food? Please try our locating foodbank feature!</p>
-                <button onclick="window.location.href='#'">Find Foodbanks</button>
+                <button onclick="window.location.href='{{ url_for('foodbankfinder') }}'">Find Foodbanks</button>
             </div>
         </section>
     </main>

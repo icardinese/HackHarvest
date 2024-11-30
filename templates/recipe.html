@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food + Pumpkinz</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='recipe.css') }}">
 </head>
 <body>
     <header>
@@ -13,9 +13,9 @@
         </div>
         <nav>
             <ul>
-                <li><a href="#">HackHarvest</a></li>
+                <li><a href="{{ url_for('home') }}">HackHarvest</a></li>
                 <li><a href="#">Contact Us</a></li>
-                <li><a href="#">Foodbanks</a></li>
+                <li><a href="{{ url_for('foodbank_requests') }}">Foodbanks</a></li>
                 <li><a href="#">Log In / Sign Up</a></li>
             </ul>
         </nav>
@@ -30,23 +30,70 @@
                     <img src="{{ recipe['image'] }}" alt="{{ recipe['title'] }}" class="recipe-image">
                     <div class="recipe-info">
                         <h3>{{ recipe['title'] }}</h3>
+                        <p>Summary: {{ recipe['summary']|safe }}</p>
                         <p>Calories: {{ recipe['nutrientinfo']['Calories']['amount'] }} kcal</p>
                         <p>Protein: {{ recipe['nutrientinfo']['Protein']['amount'] }}g</p>
                         <p>Carbs: {{ recipe['nutrientinfo']['Carbohydrates']['amount'] }}g</p>
                         <p>Fat: {{ recipe['nutrientinfo']['Fat']['amount'] }}g</p>
-                        <p>Ingredients: </p>
-                        <ul>
-                            {% for ingredient in recipe['nutrition']['ingredients'] %}
-                            <li>{{ ingredient['name'] }}</li>
-                            {% endfor %}
-                        </ul>
-                        <p>Instructions: </p>
-                            {% for instruction in recipe['analyzedInstructions']['steps'] %}
-                            <p3>
+                        <section class="ingredients-section">
+                            <div class="header">
+                                <h2>Ingredients</h2>
+                                <div class="view-toggle">
+                                    <button onclick="toggleView('grid')">Grid</button>
+                                    <button onclick="toggleView('list')">List</button>
+                                </div>
+                                <div class="servings">
+                                    <label for="servings">Servings:</label>
+                                    <input type="number" id="servings" name="servings" value="{{ recipe['servings'] }}">
+                                </div>
+                            </div>
+                            <div id="ingredients-grid" class="ingredients-grid">
+                                {% for ingredient in recipe['nutrition']['ingredients'] %}
+                                <div class="ingredient-item">
+                                    <img src="static/images/{{ ingredient['name'] }}.jpg" alt="{{ ingredient['name'] }}" class="ingredient-image">
+                                    <p class="ingredient-quantity" 
+                                    data-amount="{{ ingredient['amount'] }}" 
+                                    data-unit="{{ ingredient['unit'] }}">
+                                        {{ ingredient['amount'] }} {{ ingredient['unit'] }}
+                                    </p>
+                                    <p class="ingredient-name">{{ ingredient['name'] }}</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </section>
+                        <script>
+                            function toggleView(view) {
+                                const grid = document.getElementById('ingredients-grid');
+                                if (view === 'list') {
+                                    grid.style.display = 'block';
+                                    grid.style.gridTemplateColumns = 'none';
+                                } else {
+                                    grid.style.display = 'grid';
+                                    grid.style.gridTemplateColumns = 'repeat(auto-fit, minmax(120px, 1fr))';
+                                }
+                            }
+                            document.getElementById('servings').addEventListener('input', function (event) {
+                                const newServings = parseFloat(event.target.value); // Get updated servings
+                                const defaultServings = parseFloat(event.target.defaultValue); // Get default servings
+
+                                // Update ingredient quantities
+                                document.querySelectorAll('.ingredient-quantity').forEach((ingredient) => {
+                                    const baseAmount = parseFloat(ingredient.getAttribute('data-amount')); // Original amount
+                                    const unit = ingredient.getAttribute('data-unit'); // Unit
+                                    const adjustedAmount = (baseAmount / defaultServings) * newServings; // Adjust amount
+                                    ingredient.textContent = `${adjustedAmount.toFixed(2)} ${unit}`; // Update display
+                                });
+                            });
+                        </script>
+                        <h2>Instructions: </h2>
+                            {% for instruction in recipe['analyzedInstructions'][0]['steps'] %}
+                            <h3>
                                 Step {{ instruction['number'] }}: 
-                            </p3>
-                            <li>{{ instruction }}</li>
+                            </h3>
+                            <li>{{ instruction['step'] }}</li>
                             {% endfor %}
+                        <section class="ingredients-section">
+        </section>
                     </div>
             </div>
         </section>
