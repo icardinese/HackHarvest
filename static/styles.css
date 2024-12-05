@@ -147,3 +147,125 @@ form.recipe-form {
 .recipe-form button[type="submit"]:hover {
     background-color: #E68900;
 }
+
+/* Narrative Section */
+.narrative {
+    background: #FF9800;
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    border-radius: 8px;
+    margin: 2rem auto;
+    max-width: 800px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.narrative h2 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.narrative p {
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+}
+
+.narrative .cta-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.narrative .cta-buttons a {
+    background-color: white;
+    color: #FF9800;
+    padding: 0.8rem 1.5rem;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 5px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.narrative .cta-buttons a:hover {
+    background-color: #FF9800;
+    color: white;
+}
+
+/* "Why It Matters" Section */
+.section-why-matters {
+    padding: 2rem;
+    text-align: center;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    margin: 2rem auto;
+    max-width: 800px;
+}
+
+.section-why-matters h3 {
+    font-size: 2rem;
+    color: #FF9800;
+    font-weight: bold;
+    margin-bottom: 1rem;
+}
+
+.section-why-matters p {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.8;
+}
+
+.section-why-matters ul {
+    list-style-type: disc;
+    padding-left: 2rem;
+    text-align: left;
+    margin: 1.5rem auto;
+}
+
+.section-why-matters ul li {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Buttons */
+button, .button {
+    display: inline-block;
+    background-color: #FF9800;
+    color: white;
+    padding: 0.8rem 1.5rem;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover, .button:hover {
+    background-color: #E68900;
+}
+
+/* "Our Impact" Section */
+.section-impact {
+    padding: 2rem;
+    text-align: center;
+    margin: 2rem auto;
+    max-width: 800px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.section-impact h3 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.section-impact p {
+    font-size: 1.1rem;
+    color: #555;
+    line-height: 1.8;
+}

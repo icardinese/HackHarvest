@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome to FoodLoom</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 1.2rem;
+            color: white;
+            background-color: #FF9800;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #E68900;
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth-styles.css') }}">
+</head>
+<body>
+    <h1>Welcome to Food + Pumpkins!</h1>
+    <p>Your hub for food banks, recipes, and reducing food waste.</p>
+    <p>Please log in or sign up to get started.</p>
+    <button onclick="window.location.href='/login_page'">Log In</button>
+    <button onclick="window.location.href='/signup_page'">Sign Up</button>
+</body>
+</html>

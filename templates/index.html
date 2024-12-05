@@ -9,14 +9,14 @@
 <body>
     <header>
         <div class="logo">
-            <h1>Food + Pumpkins</h1>
+            <h1>FoodLoom</h1>
         </div>
         <nav>
             <ul>
                 <li><a href="{{ url_for('home') }}">HackHarvest</a></li>
-                <li><a href="#">Contact Us</a></li>
+                <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
                 <li><a href="{{ url_for('foodbank_requests') }}">Foodbanks</a></li>
-                <li><a href="#">Log In / Sign Up</a></li>
+                <li><a href="{{ url_for('login_page') }}">Log In / Sign Up</a></li>
             </ul>
         </nav>
     </header>
@@ -24,7 +24,8 @@
     <main>
         <section class="intro">
             <div class="help-text">
-                <h2>Help reduce food waste</h2>
+                <h1>Where food connects with care...</h1>
+                <h3>Help reduce food waste</h2>
                 <p>Your leftovers can make a difference. Find recipes or locate nearby foodbanks.</p>
             </div>
             <form class="recipe-form" method ='POST' action="/">
@@ -157,26 +158,35 @@
             </form>
         </section>
 
-        <section class="why-it-matters">
-            <h2>Why It Matters</h2>
-            <p><strong>Did you know?</strong> Globally, <span class="highlight">1.3 billion tons</span> of food is wasted annually, while millions go hungry every day. Our platform seeks to bridge this gap.</p>
-            <p>By connecting donors, foodbanks, and recipients, we ensure that surplus food is redirected to those who need it most.</p>
-        </section>
-
-        <!-- Call to Action Section -->
-        <section class="call-to-action">
-            <h2>What You Can Do</h2>
-            <p>Add your ingredients to discover recipes and avoid food waste. Or, find nearby foodbanks and contribute directly.</p>
-            <button class="cta-button" onclick="window.location.href='{{ url_for('foodbankfinder') }}'">Find Foodbanks</button>
-            <button class="cta-button" onclick="window.location.href='{{ url_for('foodbank_requests') }}'">Request Recipes</button>
-        </section>
-
-        <!-- Statistics Section -->
-        <section class="statistics">
-            <h2>Our Impact</h2>
-            <p><span class="highlight">X</span> amount of people are impacted daily by our efforts.</p>
-            <p><span class="highlight">X</span> amount of food has been saved from waste.</p>
-        </section>
+        <div class="narrative">
+            <h2>Why Food + Pumpkins Matters</h2>
+            <p>
+                Every year, 1.3 billion tons of food is wasted, while millions go hungry. Our mission is to connect donors, food banks, and recipients to bridge this gap and ensure no food is left unused.
+            </p>
+            <div class="cta-buttons">
+                <a href="{{ url_for('foodbankfinder') }}">Find Foodbanks</a>
+                <a href="{{ url_for('foodbank_requests') }}">Request Recipes</a>
+            </div>
+        </div>
+        
+        <div class="section-why-matters">
+            <h3>Why It Matters</h3>
+            <p>
+                Globally, hunger affects millions daily. Our platform addresses food waste by redistributing surplus food to those in need.
+            </p>
+            <ul>
+                <li>Connect donors to food banks</li>
+                <li>Track and share recipes for donated ingredients</li>
+                <li>Raise awareness about food waste and hunger</li>
+            </ul>
+        </div>
+        
+        <div class="section-impact">
+            <h3>Our Impact</h3>
+            <p>
+                Thousands of people are impacted daily by our efforts. Together, we've saved countless tons of food from being wasted and redirected it to communities in need.
+            </p>
+        </div>
     </main>
 
     <div id="chat-widget" onclick="toggleChat()">

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Welcome {{ username }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth-styles.css') }}">
+</head>
+<body>
+    <h1>Welcome, {{ username }}!</h1>
+    <p>Thank you for logging in. Explore the site and find food banks or recipes!</p>
+    <button class="welcome-btn" onclick="window.location.href='/'">Go to Main Page</button>
+    <button onclick="window.location.href='/logout'">Log Out</button>
+</body>
+</html>

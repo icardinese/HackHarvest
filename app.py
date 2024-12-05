@@ -8,10 +8,46 @@ import openai
 from flask_cors import CORS
 from openai import OpenAI
 import os
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
+import sqlite3
 
 openai.api_key = "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"
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-client = OpenAI()
+def init_db():
+    conn = sqlite3.connect('foodbanks.db')
+    c = conn.cursor()
+    # Create the foodbanks table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS foodbanks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT,
+            address TEXT,
+            latitude REAL,
+            longitude REAL,
+            recipes TEXT,
+            is_open INTEGER
+        )
+    ''')
+    conn.commit()
+    conn.close()
+    conn = sqlite3.connect('database.db')
+    c = conn.cursor()
+    # Create the users table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password_hash TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+init_db()
+
+client = OpenAI(api_key="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")
 
 completion = client.chat.completions.create(
     model="gpt-4o-mini",
@@ -31,9 +67,10 @@ CORS(app)
 
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
+app.secret_key = b'\xf9\x03\xf2\xf3\x14\xb6\x90\xd5\xa4\xd7\xa5\x1a\xb7\xedW\x8e\xfbP'
+
 spoonacularApiKey = "bfbc40cae6594c8ba8897bfc9abb1c27"
 spoonacularEndpoint = "https://api.spoonacular.com/recipes/complexSearch"
-import sqlite3
 
 SCRAPERAPI_KEY = "4df84a5309ec81cc7dbaf3d1a1134fa3"
 scraperapi_client = ScraperAPIClient(SCRAPERAPI_KEY)
@@ -51,6 +88,73 @@ import requests
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+@app.route('/welcome')
+def welcome():
+    if 'username' in session:
+        # If logged in, redirect to the main page
+        return redirect(url_for('main_page'))
+    else:
+        # Show the welcome page with options to log in or sign up
+        return render_template('welcome.html')
+    
+@app.route('/login_page')
+def login_page():
+    return render_template('login.html')
+
+@app.route('/main_page')
+def main_page():
+    if 'username' in session:
+        return render_template('main_page.html', username=session['username'])
+    else:
+        return redirect(url_for('welcome'))
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.form
+    username = data.get('username')
+    password = data.get('password')
+
+    conn = sqlite3.connect('database.db')
+    cur = conn.cursor()
+    cur.execute("SELECT password_hash FROM users WHERE username = ?", (username,))
+    user = cur.fetchone()
+    conn.close()
+
+    if user and check_password_hash(user[0], password):
+        session['username'] = username
+        return redirect(url_for('main_page'))
+    else:
+        return "Invalid credentials", 401
+    
+@app.route('/signup_page')
+def signup_page():
+    return render_template('signup.html')
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.form
+    username = data.get('username')
+    password = data.get('password')
+
+    password_hash = generate_password_hash(password)
+    conn = sqlite3.connect('database.db')
+    cur = conn.cursor()
+    try:
+        cur.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, password_hash))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        return "Username already exists!", 400
+    finally:
+        conn.close()
+
+    return redirect(url_for('login_page'))
+
+@app.route('/logout')
+def logout():
+    session.pop('username', None)
+    return redirect(url_for('welcome'))
+
+
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
@@ -61,16 +165,18 @@ def chat():
         user_message = data['message']
         print(f"User message: {user_message}")
 
-        # Use OpenAI's new SDK to get a response
-        response = openai.ChatCompletion.create(
-            model="gpt-4",  # Use "gpt-4" or "gpt-3.5-turbo"
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a helpful chatbot for food-related queries."},
-                {"role": "user", "content": user_message}
+                {"role": "system", "content": "You are a helpful assistant."},
+                {
+                    "role": "user",
+                    "content": data['message']
+                }
             ]
         )
 
-        bot_message = response['choices'][0]['message']['content']
+        bot_message = response.choices[0].message.content
         print(f"Bot response: {bot_message}")
 
         return jsonify({"response": bot_message})
@@ -78,10 +184,16 @@ def chat():
     except Exception as e:
         print(f"Error in /chat endpoint: {e}")
         return jsonify({"response": "An error occurred while processing your request"}), 500
-    
+
+from werkzeug.security import generate_password_hash
+from flask import session
 
 @app.route('/scrape_word', methods=['POST'])
 def scrape_word():
+    from flask import jsonify
+    import requests
+    from bs4 import BeautifulSoup
+    
     data = request.json
     url = data.get('url')
     keyword = data.get('keyword')
@@ -90,60 +202,58 @@ def scrape_word():
         return jsonify({"error": "Missing URL or keyword"}), 400
 
     try:
-        # Use ScraperAPI to fetch the page content
-        response = scraperapi_client.get(url, params={"render": "true"})
-        response = scraperapi_client.get(url, headers={"User-Agent": "Mozilla/5.0"})
-        response.raise_for_status()  # Raise an error for HTTP issues
+        # ScraperAPI request with headers to mimic a browser
+        response = requests.get(
+            url,
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            },
+            timeout=10  # Set a timeout to avoid long delays
+        )
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
 
-        # Parse the page content
+        # Parse the HTML content
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # Search for the keyword in the page content
-        if keyword.lower() in soup.get_text().lower():
-            snippet_start = soup.get_text().lower().find(keyword.lower())
-            snippet_end = snippet_start + 100
-            snippet = soup.get_text()[snippet_start:snippet_end]
+        # Check if the keyword exists in the page text
+        page_text = soup.get_text().lower()
+        keyword = keyword.lower()
+
+        if keyword in page_text:
+            snippet = get_snippet(page_text, keyword)
             return jsonify({"keyword_found": True, "snippet": snippet}), 200
         else:
-            return jsonify({"keyword_found": False}), 200
+            return jsonify({"keyword_found": False, "snippet": None}), 200
+
+    except requests.exceptions.MissingSchema:
+        return jsonify({"error": "Invalid URL. Please include http:// or https://"}), 400
+
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "Request timed out. The website took too long to respond."}), 408
+
+    except requests.exceptions.RequestException as e:
+        print(f"Request error: {e}")
+        return jsonify({"error": f"Request error: {str(e)}"}), 500
 
     except Exception as e:
-        print(f"Error during scraping: {e}")
-        return jsonify({"error": "Failed to scrape the URL"}), 500
+        print(f"General error during scraping: {e}")
+        return jsonify({"error": f"An unexpected error occurred: {str(e)}"}), 500
+
 
 def get_snippet(text, keyword, context=30):
     """
     Extracts a snippet around the keyword with `context` characters before and after.
     """
-    index = text.find(keyword.lower())
+    keyword_lower = keyword.lower()
+    text_lower = text.lower()
+
+    index = text_lower.find(keyword_lower)
     if index == -1:
         return None
+
     start = max(index - context, 0)
-    end = min(index + len(keyword) + context, len(text))
+    end = min(index + len(keyword_lower) + context, len(text))
     return text[start:end]
-
-
-
-
-def init_db():
-    conn = sqlite3.connect('foodbanks.db')
-    c = conn.cursor()
-    # Create the foodbanks table
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS foodbanks (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            address TEXT,
-            latitude REAL,
-            longitude REAL,
-            recipes TEXT,
-            is_open INTEGER
-        )
-    ''')
-    conn.commit()
-    conn.close()
-
-init_db()
 
 
 @app.route('/', methods = ['GET', 'POST'])
@@ -206,6 +316,10 @@ def home():
 def results():
     global recipes
     return render_template('results.html', recipes=recipes)
+
+@app.route('/contact')
+def contact():
+    return render_template('contactus.html')
 
 @app.route('/recipe/<int:recipe_id>')
 def recipe_details(recipe_id):

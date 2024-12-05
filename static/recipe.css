@@ -156,3 +156,14 @@ footer {
     background: #f1ebe1;
     color: #333;
 }
+
+#nutrition-chart-container {
+    width: 400px; /* Set desired width */
+    height: 250px; /* Set desired height */
+    margin: 0 auto; /* Center the chart */
+}
+
+canvas {
+    max-width: 100%;
+    max-height: 100%;
+}

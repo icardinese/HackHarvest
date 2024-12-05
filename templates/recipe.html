@@ -9,14 +9,14 @@
 <body>
     <header>
         <div class="logo">
-            <h1>Food + Pumpkins</h1>
+            <h1>FoodLoom</h1>
         </div>
         <nav>
             <ul>
                 <li><a href="{{ url_for('home') }}">HackHarvest</a></li>
-                <li><a href="#">Contact Us</a></li>
+                <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
                 <li><a href="{{ url_for('foodbank_requests') }}">Foodbanks</a></li>
-                <li><a href="#">Log In / Sign Up</a></li>
+                <li><a href="{{ url_for('login_page') }}">Log In / Sign Up</a></li>
             </ul>
         </nav>
     </header>
@@ -50,7 +50,9 @@
                             <div id="ingredients-grid" class="ingredients-grid">
                                 {% for ingredient in recipe['nutrition']['ingredients'] %}
                                 <div class="ingredient-item">
-                                    <img src="static/images/{{ ingredient['name'] }}.jpg" alt="{{ ingredient['name'] }}" class="ingredient-image">
+                                    <img src="https://spoonacular.com/cdn/ingredients_100x100/{{ ingredient['name'] }}.jpg" 
+                                    alt="{{ ingredient['name'] }}" 
+                                    class="ingredient-image">     
                                     <p class="ingredient-quantity" 
                                     data-amount="{{ ingredient['amount'] }}" 
                                     data-unit="{{ ingredient['unit'] }}">
@@ -61,6 +63,93 @@
                                 {% endfor %}
                             </div>
                         </section>
+                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                        <div id="nutrition-graph-container">
+                            <h3>Nutrition Breakdown</h3>
+                            <canvas id="nutrition-chart" width="400" height="50"></canvas>
+                        </div>
+                        <script>
+                            // Example data from the backend
+                            const nutrients = JSON.parse('{{ recipe["nutrientinfo"] | tojson }}');
+
+                            // Prepare the data for Chart.js
+                            const labels = ["Protein", "Fat", "Carbohydrates"];
+                            const dataValues = [
+                                nutrients.Protein.percentOfDailyNeeds,
+                                nutrients.Fat.percentOfDailyNeeds,
+                                nutrients.Carbohydrates.percentOfDailyNeeds,
+                            ];
+                        
+                            // Initialize Chart.js
+                            const ctx = document.getElementById('nutrition-chart').getContext('2d');
+                            const nutritionChart = new Chart(ctx, {
+                                type: 'bar',
+                                data: {
+                                    labels: labels, // Nutrient names
+                                    datasets: [{
+                                        label: '% of Daily Needs',
+                                        data: dataValues, // Percentages
+                                        backgroundColor: [
+                                            'rgba(75, 192, 192, 0.8)', // Colors for each bar
+                                            'rgba(255, 99, 132, 0.8)',
+                                            'rgba(255, 206, 86, 0.8)'
+                                        ],
+                                        borderColor: [
+                                            'rgba(75, 192, 192, 1)', // Border colors
+                                            'rgba(255, 99, 132, 1)',
+                                            'rgba(255, 206, 86, 1)'
+                                        ],
+                                        borderWidth: 1
+                                    }]
+                                },
+                                options: {
+                                    indexAxis: 'y', // Horizontal orientation
+                                    responsive: true,
+                                    maintainAspectRatio: true, // Keep the aspect ratio consistent
+                                    plugins: {
+                                        legend: {
+                                            display: false, // Hide legend for compactness
+                                        },
+                                        tooltip: {
+                                            callbacks: {
+                                                label: function(context) {
+                                                    return `${context.raw}% of Daily Needs`;
+                                                }
+                                            }
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            beginAtZero: true,
+                                            max: 100, // Cap at 100% for clarity
+                                            title: {
+                                                display: true,
+                                                text: '% of Daily Needs',
+                                                font: {
+                                                    size: 14,
+                                                    weight: 'bold'
+                                                }
+                                            }
+                                        },
+                                        y: {
+                                            title: {
+                                                display: true,
+                                                text: 'Nutrients',
+                                                font: {
+                                                    size: 14,
+                                                    weight: 'bold'
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+
+                        </script>
+                        
+                        
+                        
+                        
                         <script>
                             function toggleView(view) {
                                 const grid = document.getElementById('ingredients-grid');

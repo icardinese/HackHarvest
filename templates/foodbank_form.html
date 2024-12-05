@@ -9,14 +9,14 @@
 <body>
     <header>
         <div class="logo">
-            <h1>Food + Pumpkins</h1>
+            <h1>FoodLoom</h1>
         </div>
         <nav>
             <ul>
                 <li><a href="{{ url_for('home') }}">HackHarvest</a></li>
-                <li><a href="#">Contact Us</a></li>
+                <li><a href="{{ url_for('contact') }}">Contact Us</a></li>
                 <li><a href="{{ url_for('foodbank_requests') }}">Foodbanks</a></li>
-                <li><a href="#">Log In / Sign Up</a></li>
+                <li><a href="{{ url_for('login_page') }}">Log In / Sign Up</a></li>
             </ul>
         </nav>
     </header>
