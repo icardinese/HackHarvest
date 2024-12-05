@@ -1,2 +1,2 @@
 
-    return render_template('index.html')
+            "latitude": row["latitude"],

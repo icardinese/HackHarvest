@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Food Banks Map</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='map.css') }}">
 </head>
 <body>
     <header>
@@ -22,11 +23,15 @@
         <input id="pac-input" type="text" placeholder="Enter a location" />
         <button id="search-btn">Search</button>
     </div>
+    <div class="controls">
+        <input id="food-query" type="text" placeholder="Search for food items (e.g., eggs)" />
+        <button id="food-search-btn">Search</button>
+    </div>    
     <script>
         let map; // Declare map globally
         let service; // Declare service globally
         let markers = []; // Track all markers
-    
+
         function initMap() {
             // Initialize the map
             map = new google.maps.Map(document.getElementById("map"), {
@@ -34,13 +39,13 @@
                 zoom: 12,
                 mapId: "ee1ff17c855281dd",
             });
-    
+
             service = new google.maps.places.PlacesService(map);
-    
+
             // Perform an initial search for food banks
             searchNearby(map.getCenter());
         }
-    
+        
         function searchNearby(location) {
             clearMarkers(); // Clear existing markers
             const request = {
@@ -51,16 +56,40 @@
 
             service.nearbySearch(request, (results, status) => {
                 if (status === google.maps.places.PlacesServiceStatus.OK) {
-                    // Fetch food bank requests from Flask
-                    fetch('/get_requests')
+                    // Fetch food bank requests from the backend
+                    fetch('/get_foodbanks')
                         .then(response => response.json())
                         .then(foodbankRequests => {
-                            results.forEach((place) => {
-                                // Check if the food bank has requested recipes
-                                const matchingRequest = foodbankRequests.find(req => req[1] === place.vicinity);
-                                const hasRequests = !!matchingRequest;
+                            const backendAddresses = foodbankRequests.map(req => req.address);
 
-                                createMarker(place, hasRequests, matchingRequest ? matchingRequest[2] : null);
+                            // Loop through Google Maps results
+                            results.forEach((place) => {
+                                const matchingRequest = foodbankRequests.find(req => req.address === place.vicinity);
+
+                                createMarker(
+                                    place.geometry.location,
+                                    place.name,
+                                    place.vicinity,
+                                    matchingRequest ? matchingRequest.recipes : null,
+                                    matchingRequest ? matchingRequest.is_open : true
+                                );
+                            });
+
+                            // Add custom backend-only food banks
+                            foodbankRequests.forEach((foodbank) => {
+                                if (!backendAddresses.includes(foodbank.address)) {
+                                    const position = {
+                                        lat: parseFloat(foodbank.latitude),
+                                        lng: parseFloat(foodbank.longitude),
+                                    };
+                                    createMarker(
+                                        position,
+                                        foodbank.name,
+                                        foodbank.address,
+                                        foodbank.recipes,
+                                        foodbank.is_open
+                                    );
+                                }
                             });
                         })
                         .catch(error => console.error("Error fetching requests:", error));
@@ -69,52 +98,173 @@
                 }
             });
         }
-    
+
+
+
+
+
+
+
+
+
         function clearMarkers() {
-            markers.forEach((marker) => marker.map = null); // Remove markers from map
+            markers.forEach((marker) => marker.setMap(null)); // Remove markers from map
             markers = []; // Reset marker array
         }
-    
-        function createMarker(place, hasRequests, recipes) {
-            const isOpen = place.opening_hours && place.opening_hours.isOpen();
-            const markerShape = hasRequests ? "square" : "circle"; // Square for food banks with requests
 
-            const markerDiv = document.createElement('div');
-            markerDiv.style.backgroundColor = isOpen ? "red" : "gray";
-            markerDiv.style.width = markerShape === "square" ? "16px" : "12px";
-            markerDiv.style.height = markerShape === "square" ? "16px" : "12px";
-            markerDiv.style.border = "1px solid black";
-            markerDiv.style.borderRadius = markerShape === "square" ? "0" : "50%";
 
-            const marker = new google.maps.marker.AdvancedMarkerElement({
-                position: place.geometry.location,
+
+        function createMarker(position, name, address, recipes, isOpen, website = null) {
+            const markerShape = recipes && recipes.length > 0 ? "green" : "red";
+            const marker = new google.maps.Marker({
+                position: position,
                 map: map,
-                title: place.name,
-                content: markerDiv,
+                title: name,
+                icon: {
+                    url: markerShape === "green"
+                        ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+                        : "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                },
             });
 
-            markers.push(marker); // Add marker to global array
+            markers.push(marker);
+
+            const sanitizedName = name.replace(/[^a-zA-Z0-9]/g, '_'); // Sanitize ID
 
             const infoWindowContent = `
-                <strong>${place.name}</strong><br>
-                ${place.vicinity || "Address not available"}<br>
+                <strong>${name}</strong><br>
+                ${address || "Address not available"}<br>
                 Status: ${isOpen ? "Open" : "Closed"}<br>
-                ${hasRequests ? `<strong>Requested Recipes:</strong> ${recipes}` : ""}
+                <strong>Requested Recipes:</strong><br>
+                ${recipes && recipes.length > 0 ? `<ul>${recipes.map(r => `<li>${r}</li>`).join("")}</ul>` : "No recipes yet."}
+                ${website ? `<br><a href="${website}" target="_blank">Visit Website</a>` : ""}
+                <br><button id="add-recipes-btn-${sanitizedName}" class="add-recipes-btn">Add Recipes</button>
             `;
 
             const infoWindow = new google.maps.InfoWindow({
                 content: infoWindowContent,
             });
 
-            markerDiv.addEventListener("click", () => {
+            marker.addListener("click", () => {
                 infoWindow.open({
                     anchor: marker,
                     map: map,
                 });
+
+                // Add the event listener after the info window is opened
+                setTimeout(() => {
+                    const btn = document.querySelector(`#add-recipes-btn-${sanitizedName}`);
+                    if (btn) {
+                        btn.addEventListener("click", () => {
+                            redirectToForm(name, address);
+                        });
+                    } else {
+                        console.error(`Button with ID add-recipes-btn-${sanitizedName} not found.`);
+                    }
+                }, 100); // Small timeout to ensure DOM is updated
             });
         }
 
-    
+
+
+
+
+
+
+
+        function updateMapWithFoodResults(foodbanks) {
+            clearMarkers();
+            foodbanks.forEach((foodbank) => {
+                createMarker(
+                    { lat: foodbank.latitude, lng: foodbank.longitude },
+                    foodbank.name,
+                    foodbank.address,
+                    true, // Indicate the foodbank matches the query
+                    foodbank.recipes,
+                    foodbank.is_open
+                );
+            });
+        }
+
+        document.getElementById("food-search-btn").addEventListener("click", () => {
+            const foodItem = document.getElementById("food-query").value.trim();
+
+            if (foodItem) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const { latitude, longitude } = position.coords;
+
+                    // Perform a filtered search with the food item
+                    fetch("/search_food", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            food_item: foodItem,
+                            latitude,
+                            longitude,
+                            radius: 10000, // 10km radius
+                        }),
+                    })
+                        .then((response) => response.json())
+                        .then((data) => {
+                            clearMarkers(); // Clear existing markers
+                            const foodbanks = data.matching_foodbanks;
+
+                            foodbanks.forEach((foodbank) => {
+                                createMarker(
+                                    { lat: parseFloat(foodbank.latitude), lng: parseFloat(foodbank.longitude) },
+                                    foodbank.name,
+                                    foodbank.address,
+                                    foodbank.recipes,
+                                    foodbank.is_open
+                                );
+                            });
+                        })
+                        .catch((error) => console.error("Error fetching food search results:", error));
+                });
+            } else {
+                alert("Please enter a food item to search for.");
+            }
+        });
+
+
+        document.getElementById("search-btn").addEventListener("click", () => {
+            const input = document.getElementById("pac-input").value.trim();
+            if (input) {
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: input }, (results, status) => {
+                    if (status === "OK") {
+                        const newLocation = results[0].geometry.location;
+                        map.setCenter(newLocation); // Re-center map
+                        searchNearby(newLocation); // Search nearby food banks without filters
+                    } else {
+                        alert("Geocode was not successful for the following reason: " + status);
+                    }
+                });
+            } else {
+                alert("Please enter a location!");
+            }
+        });
+
+
+        function redirectToForm(name, address) {
+            // Replace placeholders with actual values
+            const url = "{{ url_for('redirect_to_form', name='NAME_PLACEHOLDER', address='ADDRESS_PLACEHOLDER') }}"
+                .replace('NAME_PLACEHOLDER', encodeURIComponent(name))
+                .replace('ADDRESS_PLACEHOLDER', encodeURIComponent(address));
+            
+            // Redirect the user
+            window.location.href = url;
+        }
+
+
+        function refreshMarkers() {
+            // Clear existing markers
+            clearMarkers();
+
+            // Reload both Google Maps API and backend food banks
+            searchNearby(map.getCenter());
+        }
+
         // Handle search button click
         document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("search-btn").addEventListener("click", () => {
@@ -135,11 +285,11 @@
                 }
             });
         });
-    
+
         // Ensure initMap is called when the page loads
         window.onload = initMap;
     </script>
-    
+
     <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgYrzWtLZnfB4fpn8Z9l9zPdb66N2P2J8&libraries=places,marker&callback=initMap"
     async

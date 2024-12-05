@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Request Recipes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='form.css') }}">
 </head>
 <body>
     <header>
@@ -21,16 +22,16 @@
     </header>
     <h1>Request Recipes for Your Food Bank</h1>
     <form method="POST" action="/foodbank_requests">
-        <label for="foodbank_name">Food Bank Name:</label><br>
-        <input type="text" id="foodbank_name" name="foodbank_name" required><br><br>
-
+        <label for="name">Food Bank Name:</label><br>
+        <input type="text" id="name" name="foodbank_name" value="{{ foodbank_name }}" required><br><br>
         <label for="address">Address:</label><br>
-        <input type="text" id="address" name="address" required><br><br>
-
-        <label for="requested_recipes">Requested Recipes (comma-separated):</label><br>
-        <textarea id="requested_recipes" name="requested_recipes" rows="4" cols="50" required></textarea><br><br>
-
+        <input type="text" id="address" name="address" value="{{ address }}" required><br><br>
+        <label for="recipes">Requested Recipes (comma-separated):</label><br>
+        <textarea id="recipes" name="requested_recipes" rows="4" cols="50" required></textarea><br><br>
+        <label for="website">Website Name</label><br>
+        <input type="text" id="website" name="website" required><br><br>
+    
         <button type="submit">Submit Request</button>
-    </form>
+    </form>    
 </body>
 </html>

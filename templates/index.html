@@ -157,15 +157,25 @@
             </form>
         </section>
 
-        <section class="narrative">
-            <div class="stats">
-                <p><strong>X</strong> amount of people die of hunger daily.</p>
-                <p><strong>X</strong> amount of food is wasted.</p>
-            </div>
-            <div class="call-to-action">
-                <p>Don’t have use for food? Please try our locating foodbank feature!</p>
-                <button onclick="window.location.href='{{ url_for('foodbankfinder') }}'">Find Foodbanks</button>
-            </div>
+        <section class="why-it-matters">
+            <h2>Why It Matters</h2>
+            <p><strong>Did you know?</strong> Globally, <span class="highlight">1.3 billion tons</span> of food is wasted annually, while millions go hungry every day. Our platform seeks to bridge this gap.</p>
+            <p>By connecting donors, foodbanks, and recipients, we ensure that surplus food is redirected to those who need it most.</p>
+        </section>
+
+        <!-- Call to Action Section -->
+        <section class="call-to-action">
+            <h2>What You Can Do</h2>
+            <p>Add your ingredients to discover recipes and avoid food waste. Or, find nearby foodbanks and contribute directly.</p>
+            <button class="cta-button" onclick="window.location.href='{{ url_for('foodbankfinder') }}'">Find Foodbanks</button>
+            <button class="cta-button" onclick="window.location.href='{{ url_for('foodbank_requests') }}'">Request Recipes</button>
+        </section>
+
+        <!-- Statistics Section -->
+        <section class="statistics">
+            <h2>Our Impact</h2>
+            <p><span class="highlight">X</span> amount of people are impacted daily by our efforts.</p>
+            <p><span class="highlight">X</span> amount of food has been saved from waste.</p>
         </section>
     </main>
 
