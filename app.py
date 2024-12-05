@@ -2,38 +2,127 @@ from flask import Flask, request, jsonify, redirect, url_for
 from flask import render_template
 import requests
 import googlemaps
+from scraperapi_sdk import ScraperAPIClient
 from bs4 import BeautifulSoup
+import openai
+from flask_cors import CORS
+from openai import OpenAI
+import os
+
+openai.api_key = "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"
+
+client = OpenAI()
+
+completion = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[
+        {"role": "system", "content": "You are a helpful assistant."},
+        {
+            "role": "user",
+            "content": "Write a haiku about recursion in programming."
+        }
+    ]
+)
+
+print(completion.choices[0].message)
 
 app = Flask(__name__)
+CORS(app)
+
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 spoonacularApiKey = "bfbc40cae6594c8ba8897bfc9abb1c27"
 spoonacularEndpoint = "https://api.spoonacular.com/recipes/complexSearch"
 import sqlite3
 
+SCRAPERAPI_KEY = "4df84a5309ec81cc7dbaf3d1a1134fa3"
+scraperapi_client = ScraperAPIClient(SCRAPERAPI_KEY)
+
 recipes = []
+from bs4 import BeautifulSoup
+import requests
+
+from googlemaps import Client as GoogleMapsClient
+
+gmaps = GoogleMapsClient(key='AIzaSyCgYrzWtLZnfB4fpn8Z9l9zPdb66N2P2J8')
 
 from bs4 import BeautifulSoup
 import requests
 
-def scrape_foodbank_website(url, search_terms):
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+@app.route('/chat', methods=['POST'])
+def chat():
     try:
-        # Send a GET request to the website
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
-        
-        # Parse the website HTML
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # Search for the terms in the website's text content
-        website_text = soup.get_text().lower()
-        for term in search_terms:
-            if term.lower() in website_text:
-                return True  # Found the term
-        return False  # None of the terms matched
+        data = request.json
+        if not data or 'message' not in data:
+            return jsonify({"response": "No message provided"}), 400
+
+        user_message = data['message']
+        print(f"User message: {user_message}")
+
+        # Use OpenAI's new SDK to get a response
+        response = openai.ChatCompletion.create(
+            model="gpt-4",  # Use "gpt-4" or "gpt-3.5-turbo"
+            messages=[
+                {"role": "system", "content": "You are a helpful chatbot for food-related queries."},
+                {"role": "user", "content": user_message}
+            ]
+        )
+
+        bot_message = response['choices'][0]['message']['content']
+        print(f"Bot response: {bot_message}")
+
+        return jsonify({"response": bot_message})
+
     except Exception as e:
-        print(f"Error scraping {url}: {e}")
-        return False
+        print(f"Error in /chat endpoint: {e}")
+        return jsonify({"response": "An error occurred while processing your request"}), 500
+    
+
+@app.route('/scrape_word', methods=['POST'])
+def scrape_word():
+    data = request.json
+    url = data.get('url')
+    keyword = data.get('keyword')
+
+    if not url or not keyword:
+        return jsonify({"error": "Missing URL or keyword"}), 400
+
+    try:
+        # Use ScraperAPI to fetch the page content
+        response = scraperapi_client.get(url, params={"render": "true"})
+        response = scraperapi_client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+        response.raise_for_status()  # Raise an error for HTTP issues
+
+        # Parse the page content
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Search for the keyword in the page content
+        if keyword.lower() in soup.get_text().lower():
+            snippet_start = soup.get_text().lower().find(keyword.lower())
+            snippet_end = snippet_start + 100
+            snippet = soup.get_text()[snippet_start:snippet_end]
+            return jsonify({"keyword_found": True, "snippet": snippet}), 200
+        else:
+            return jsonify({"keyword_found": False}), 200
+
+    except Exception as e:
+        print(f"Error during scraping: {e}")
+        return jsonify({"error": "Failed to scrape the URL"}), 500
+
+def get_snippet(text, keyword, context=30):
+    """
+    Extracts a snippet around the keyword with `context` characters before and after.
+    """
+    index = text.find(keyword.lower())
+    if index == -1:
+        return None
+    start = max(index - context, 0)
+    end = min(index + len(keyword) + context, len(text))
+    return text[start:end]
+
+
 
 
 def init_db():
@@ -216,11 +305,14 @@ def submit_foodbank():
     address = request.form['address']
     recipes = request.form.get('recipes', '')
 
-    # Optional: Geocode the address to get latitude and longitude
-    geocoder = googlemaps.Client(key='AIzaSyCgYrzWtLZnfB4fpn8Z9l9zPdb66N2P2J8')
-    geocode_result = geocoder.geocode(address)
-    latitude = geocode_result[0]['geometry']['location']['lat']
-    longitude = geocode_result[0]['geometry']['location']['lng']
+    # Geocode the address to get latitude and longitude
+    try:
+        geocode_result = gmaps.geocode(address)
+        latitude = geocode_result[0]['geometry']['location']['lat']
+        longitude = geocode_result[0]['geometry']['location']['lng']
+    except Exception as e:
+        print(f"Error geocoding address '{address}': {e}")
+        latitude, longitude = None, None
 
     conn = sqlite3.connect('foodbanks.db')
     c = conn.cursor()
@@ -236,6 +328,7 @@ def submit_foodbank():
 
     return render_template('request_success.html', foodbank_name=name)
 
+
 @app.route('/get_foodbanks', methods=['GET'])
 def get_foodbanks():
     conn = sqlite3.connect('foodbanks.db')
@@ -245,18 +338,38 @@ def get_foodbanks():
     c.execute("SELECT * FROM foodbanks")
     rows = c.fetchall()
 
-    foodbanks = [
-        {
+    foodbanks = []
+    for row in rows:
+        latitude = row["latitude"]
+        longitude = row["longitude"]
+        address = row["address"]
+
+        # If latitude or longitude is missing, geocode the address
+        if latitude is None or longitude is None:
+            try:
+                geocode_result = gmaps.geocode(address)
+                if geocode_result:
+                    latitude = geocode_result[0]["geometry"]["location"]["lat"]
+                    longitude = geocode_result[0]["geometry"]["location"]["lng"]
+
+                    # Update the database with the fetched coordinates
+                    c.execute(
+                        "UPDATE foodbanks SET latitude = ?, longitude = ? WHERE id = ?",
+                        (latitude, longitude, row["id"]),
+                    )
+                    conn.commit()
+            except Exception as e:
+                print(f"Error geocoding address '{address}': {e}")
+                latitude, longitude = None, None
+
+        foodbanks.append({
             "name": row["name"],
             "address": row["address"],
-            "latitude": row["latitude"],
-            "longitude": row["longitude"],
+            "latitude": latitude,
+            "longitude": longitude,
             "recipes": row["recipes"].split(',') if row["recipes"] else [],
             "is_open": bool(row["is_open"]),
-        }
-        for row in rows
-    ]
-    print(foodbanks)
+        })
 
     conn.close()
     return jsonify(foodbanks)

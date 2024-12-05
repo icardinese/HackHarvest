@@ -66,12 +66,21 @@
                             results.forEach((place) => {
                                 const matchingRequest = foodbankRequests.find(req => req.address === place.vicinity);
 
+
+                                const position = {
+                                    lat: typeof place.geometry.location.lat === "function" ? place.geometry.location.lat() : place.geometry.location.lat,
+                                    lng: typeof place.geometry.location.lng === "function" ? place.geometry.location.lng() : place.geometry.location.lng,
+                                };
+
+                                console.log(`Debugging position for ${name}:`, position);
+
                                 createMarker(
-                                    place.geometry.location,
+                                    position,
                                     place.name,
                                     place.vicinity,
                                     matchingRequest ? matchingRequest.recipes : null,
-                                    matchingRequest ? matchingRequest.is_open : true
+                                    matchingRequest ? matchingRequest.is_open : true,
+                                    place.place_id // Pass the placeId for Google Maps results
                                 );
                             });
 
@@ -79,15 +88,16 @@
                             foodbankRequests.forEach((foodbank) => {
                                 if (!backendAddresses.includes(foodbank.address)) {
                                     const position = {
-                                        lat: parseFloat(foodbank.latitude),
-                                        lng: parseFloat(foodbank.longitude),
+                                        lat: typeof place.geometry.location.lat === "function" ? place.geometry.location.lat() : place.geometry.location.lat,
+                                        lng: typeof place.geometry.location.lng === "function" ? place.geometry.location.lng() : place.geometry.location.lng,
                                     };
                                     createMarker(
                                         position,
                                         foodbank.name,
                                         foodbank.address,
                                         foodbank.recipes,
-                                        foodbank.is_open
+                                        foodbank.is_open,
+                                        null // No placeId for backend-only results
                                     );
                                 }
                             });
@@ -103,10 +113,6 @@
 
 
 
-
-
-
-
         function clearMarkers() {
             markers.forEach((marker) => marker.setMap(null)); // Remove markers from map
             markers = []; // Reset marker array
@@ -114,22 +120,24 @@
 
 
 
-        function createMarker(position, name, address, recipes, isOpen, website = null) {
-            const markerShape = recipes && recipes.length > 0 ? "green" : "red";
+        function createMarker(position, name, address, recipes, isOpen, website = null, keywordFound = false, keywordSnippet = "") {
+            if (!position || isNaN(position.lat) || isNaN(position.lng)) {
+                console.error(`Invalid coordinates for ${name}`, position);
+                return;
+            }
+
+            const markerIcon = recipes && recipes.length > 0
+                ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png" // Green if recipes exist
+                : "http://maps.google.com/mapfiles/ms/icons/red-dot.png"; // Red otherwise
+
             const marker = new google.maps.Marker({
                 position: position,
                 map: map,
                 title: name,
-                icon: {
-                    url: markerShape === "green"
-                        ? "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
-                        : "http://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                },
+                icon: markerIcon,
             });
 
             markers.push(marker);
-
-            const sanitizedName = name.replace(/[^a-zA-Z0-9]/g, '_'); // Sanitize ID
 
             const infoWindowContent = `
                 <strong>${name}</strong><br>
@@ -138,7 +146,8 @@
                 <strong>Requested Recipes:</strong><br>
                 ${recipes && recipes.length > 0 ? `<ul>${recipes.map(r => `<li>${r}</li>`).join("")}</ul>` : "No recipes yet."}
                 ${website ? `<br><a href="${website}" target="_blank">Visit Website</a>` : ""}
-                <br><button id="add-recipes-btn-${sanitizedName}" class="add-recipes-btn">Add Recipes</button>
+                <br><strong>Keyword Found:</strong> ${keywordFound ? "Yes" : "No"}
+                ${keywordSnippet ? `<br><strong>Snippet:</strong> ${keywordSnippet}` : ""}
             `;
 
             const infoWindow = new google.maps.InfoWindow({
@@ -150,25 +159,31 @@
                     anchor: marker,
                     map: map,
                 });
-
-                // Add the event listener after the info window is opened
-                setTimeout(() => {
-                    const btn = document.querySelector(`#add-recipes-btn-${sanitizedName}`);
-                    if (btn) {
-                        btn.addEventListener("click", () => {
-                            redirectToForm(name, address);
-                        });
-                    } else {
-                        console.error(`Button with ID add-recipes-btn-${sanitizedName} not found.`);
-                    }
-                }, 100); // Small timeout to ensure DOM is updated
             });
         }
 
 
 
 
+        function fetchPlaceDetails(placeId) {
+            const request = {
+                placeId: placeId,
+                fields: ["website", "name"], // Ensure "website" is requested
+            };
 
+            service.getDetails(request, (place, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    if (place.website) {
+                        console.log(`Website for ${place.name}: ${place.website}`);
+                        window.open(place.website, "_blank"); // Open the actual website
+                    } else {
+                        alert("No website available for this place.");
+                    }
+                } else {
+                    console.error("Error fetching place details:", status);
+                }
+            });
+        }
 
 
 
@@ -289,6 +304,68 @@
         // Ensure initMap is called when the page loads
         window.onload = initMap;
     </script>
+
+    <div>
+        <h2>Web Scraper</h2>
+        <label for="scrape-url">URL to Scrape:</label><br>
+        <input type="text" id="scrape-url" placeholder="Enter the website URL"><br><br>
+
+        <label for="scrape-keyword">Keyword:</label><br>
+        <input type="text" id="scrape-keyword" placeholder="Enter a keyword to search for"><br><br>
+
+        <button id="scrape-btn">Scrape</button>
+    </div>
+
+    <div id="scrape-result" style="margin-top: 20px;">
+        <!-- Scrape results will be displayed here -->
+    </div>
+    <script src="your-script-file.js"></script>
+    <script>
+        document.getElementById('scrape-btn').addEventListener('click', () => {
+            const url = document.getElementById('scrape-url').value;
+            const keyword = document.getElementById('scrape-keyword').value;
+
+            const resultContainer = document.getElementById('scrape-result');
+            if (!resultContainer) {
+                console.error("Result container not found in the DOM.");
+                return;
+            }
+
+            const data = { url, keyword };
+            console.log("Sending data to scrape:", data);
+
+            // Display a loading message while waiting for the result
+            resultContainer.innerHTML = '<p>Loading...</p>';
+
+            fetch('/scrape_word', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("Scrape result:", data);
+                    // Display the scrape result
+                    if (data.error) {
+                        resultContainer.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                    } else if (data.keyword_found) {
+                        resultContainer.innerHTML = `
+                            <p style="color: green;">Keyword found!</p>
+                            <p>Snippet:</p>
+                            <blockquote>${data.snippet}</blockquote>
+                        `;
+                    } else {
+                        resultContainer.innerHTML = '<p style="color: orange;">Keyword not found on the website.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error("Scrape error:", error);
+                    resultContainer.innerHTML = '<p style="color: red;">An error occurred during scraping.</p>';
+                });
+        });
+
+    </script>
+
 
     <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCgYrzWtLZnfB4fpn8Z9l9zPdb66N2P2J8&libraries=places,marker&callback=initMap"
