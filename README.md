@@ -4,7 +4,8 @@ A way for food waste to not actually be wasted!
 # Quick Start Up Guide
 ***Disclimaer**: Although you could use the food searching features in this application. Things like the google maps API, and OpenAI API might not be
 accessible due to security issues with the API key so it has been temporary shut off. I didn't want to change the commit but because this repository is public
-I didn't want this key to be misused by malicious intent.
+I didn't want this key to be misused by malicious intent. If you want these keys to be up and running for judging please let me know!
+email: ryanyou0517@gmail.com
 
 **Setup the Virtual Environment**
 
